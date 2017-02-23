@@ -4,12 +4,8 @@ import android.Manifest;
 import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
@@ -23,13 +19,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import java.io.BufferedOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity implements Handler.Callback {
 
@@ -108,7 +97,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     @Override
     public boolean handleMessage(Message msg) {
         Log.v(TAG, "Received message: " + msg);
-        String message = msg.getData().getString("message");
+        Bundle bundle = msg.getData();
         switch (msg.what) {
             case (BluetoothService.MESSAGE_DISCONNECTED):
                 mStatusView.setText("Disconnected");
@@ -116,17 +105,19 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
                 mProgressDialog.hide();
                 break;
             case (BluetoothService.MESSAGE_CONNECTING):
+                BluetoothDevice device = (BluetoothDevice) bundle.getParcelable("device");
                 mStatusView.setText("Connecting...");
                 mStatusView.setTextColor(Color.YELLOW);
                 mProgressDialog.setMessage("Connecting...");
+                mProgressDialog.setMessage("Connecting to " + (device.getName() == null ? device.getAddress() : device.getName()));
                 mProgressDialog.show();
                 break;
-            case (BluetoothService.MESSAGE_CONNECT_FAILED):
+            case (BluetoothService.MESSAGE_CONNECTING_FAILED):
                 mProgressDialog.hide();
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Error");
-                builder.setMessage("Unable to connect: " + message);
+                builder.setMessage("Unable to connect: " + bundle.getString("reason"));
                 builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {

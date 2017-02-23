@@ -19,7 +19,7 @@ public class BluetoothService {
     public static final String TAG = "BluetoothService";
     public static final int MESSAGE_DISCONNECTED = 0;
     public static final int MESSAGE_CONNECTING = 1;
-    public static final int MESSAGE_CONNECT_FAILED = 2;
+    public static final int MESSAGE_CONNECTING_FAILED = 2;
     public static final int MESSAGE_CONNECTED = 3;
 
     private final BluetoothAdapter mBluetoothAdapter;
@@ -49,7 +49,7 @@ public class BluetoothService {
             mConnectThread = null;
         }
 
-        notifyUI(MESSAGE_CONNECTING, "");
+        notifyConnecting(device);
         mConnectThread = new ConnectThread(device);
         mConnectThread.start();
     }
@@ -60,29 +60,57 @@ public class BluetoothService {
         }
     }
 
-    private void notifyUI(int what, final String message) {
-        Message msg = mHandler.obtainMessage(what);
+    private void notifyDisconnected() {
+        mHandler.obtainMessage(MESSAGE_DISCONNECTED).sendToTarget();
+    }
+
+    private void notifyConnecting(final BluetoothDevice device) {
+        Message msg = mHandler.obtainMessage(MESSAGE_CONNECTING);
         Bundle bundle = new Bundle();
-        bundle.putString("message", message);
+        bundle.putParcelable("device", device);
+        msg.setData(bundle);
+        msg.sendToTarget();
+    }
+
+    private void notifyConnectingFailed(final String reason) {
+        Message msg = mHandler.obtainMessage(MESSAGE_CONNECTING_FAILED);
+        Bundle bundle = new Bundle();
+        bundle.putString("reason", reason);
+        msg.setData(bundle);
+        msg.sendToTarget();
+    }
+
+    private void notifyConnected(final BluetoothDevice device) {
+        Message msg = mHandler.obtainMessage(MESSAGE_CONNECTED);
+        Bundle bundle = new Bundle();
+        bundle.putParcelable("device", device);
         msg.setData(bundle);
         msg.sendToTarget();
     }
 
     private class ConnectThread extends Thread {
+
+        private BluetoothDevice mDevice;
         private BluetoothSocket mmSocket;
 
         public ConnectThread(BluetoothDevice device) {
+            mDevice = device;
             try {
                 mmSocket = device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"));
             } catch (IOException e) {
                 Log.e(TAG, "Socket's create() method failed", e);
-                notifyUI(MESSAGE_CONNECT_FAILED, e.toString());
+                notifyConnectingFailed(e.toString());
             }
         }
 
         public void run() {
             // Cancel discovery because it otherwise slows down the connection.
             mBluetoothAdapter.cancelDiscovery();
+
+            if (mmSocket == null) {
+                cancel();
+                return;
+            }
 
             try {
                 // Connect to the remote device through the socket. This call blocks
@@ -104,12 +132,12 @@ public class BluetoothService {
                     mmSocket.connect();
                 } catch (IOException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                     Log.w(TAG, e);
-                    notifyUI(MESSAGE_CONNECT_FAILED, e.toString());
+                    notifyConnectingFailed(e.toString());
                     cancel();
                 }
             }
 
-            notifyUI(MESSAGE_CONNECTED, "");
+            notifyConnected(mDevice);
 
             // The connection attempt succeeded. Perform work associated with
             // the connection in a separate thread.
@@ -123,7 +151,7 @@ public class BluetoothService {
             } catch (IOException e) {
                 Log.e(TAG, "Could not close the client socket", e);
             }
-            notifyUI(MESSAGE_DISCONNECTED, "");
+            notifyDisconnected();
         }
 
         private void manageMyConnectedSocket(BluetoothSocket socket) {
