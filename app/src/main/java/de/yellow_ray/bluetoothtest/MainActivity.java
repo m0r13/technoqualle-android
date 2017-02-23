@@ -1,6 +1,7 @@
 package de.yellow_ray.bluetoothtest;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
@@ -69,6 +70,12 @@ public class MainActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 BluetoothDevice device = data.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 Log.v(TAG, "Device was picked: " + device.getAddress());
+
+                // that's dope
+                ProgressDialog progress = new ProgressDialog(this);
+                progress.setMessage("Connecting to " + device.getAddress());
+                progress.setIndeterminate(true);
+                progress.show();
             }
         }
     }
