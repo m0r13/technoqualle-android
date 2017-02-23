@@ -7,12 +7,21 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.BufferedOutputStream;
@@ -22,7 +31,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements Handler.Callback {
 
     private static final String TAG = "MainActivity";
     private static final int REQUEST_ENABLE_BT = 42;
@@ -30,15 +39,37 @@ public class MainActivity extends AppCompatActivity {
 
     private final BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
+    private Handler mHandler;
+    private BluetoothService mBluetoothService;
+
+    private TextView mStatusView;
+    private ProgressDialog mProgressDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        mStatusView = (TextView) findViewById(R.id.statusText);
+        mProgressDialog = new ProgressDialog(this);
+        mProgressDialog.setCancelable(false);
+        mProgressDialog.setIndeterminate(true);
+        mProgressDialog.hide();
+
+        final Intent connectIntent = new Intent(this, DeviceListActivity.class);
+        ((Button) findViewById(R.id.connectButton)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(connectIntent, REQUEST_PICK_DEVICE);
+            }
+        });
+
+        mHandler = new Handler(Looper.getMainLooper(), this);
+        mBluetoothService = new BluetoothService(mHandler);
+
         if (mBluetoothAdapter == null) {
             Toast.makeText(this, "Your device doesn't support bluetooth.", Toast.LENGTH_LONG).show();
             finish();
-            return;
         }
 
         ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
@@ -52,8 +83,6 @@ public class MainActivity extends AppCompatActivity {
         for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
             Log.v(TAG, "Paired: " + device.getName() + " " + device.getAddress());
         }
-
-        startActivityForResult(new Intent(this, DeviceListActivity.class), REQUEST_PICK_DEVICE);
     }
 
     @Override
@@ -71,78 +100,48 @@ public class MainActivity extends AppCompatActivity {
                 BluetoothDevice device = data.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 Log.v(TAG, "Device was picked: " + device.getAddress());
 
-                // that's dope
-                ProgressDialog progress = new ProgressDialog(this);
-                progress.setMessage("Connecting to " + device.getAddress());
-                progress.setIndeterminate(true);
-                progress.show();
+                mBluetoothService.connect(device);
             }
         }
     }
 
-    private class ConnectThread extends Thread {
-        private BluetoothSocket mmSocket;
+    @Override
+    public boolean handleMessage(Message msg) {
+        Log.v(TAG, "Received message: " + msg);
+        String message = msg.getData().getString("message");
+        switch (msg.what) {
+            case (BluetoothService.MESSAGE_DISCONNECTED):
+                mStatusView.setText("Disconnected");
+                mStatusView.setTextColor(Color.RED);
+                mProgressDialog.hide();
+                break;
+            case (BluetoothService.MESSAGE_CONNECTING):
+                mStatusView.setText("Connecting...");
+                mStatusView.setTextColor(Color.YELLOW);
+                mProgressDialog.setMessage("Connecting...");
+                mProgressDialog.show();
+                break;
+            case (BluetoothService.MESSAGE_CONNECT_FAILED):
+                mProgressDialog.hide();
 
-        public ConnectThread(BluetoothDevice device) {
-            try {
-                mmSocket = device.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"));
-            } catch (IOException e) {
-                Log.e(TAG, "Socket's create() method failed", e);
-            }
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                builder.setTitle("Error");
+                builder.setMessage("Unable to connect: " + message);
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+                builder.setCancelable(false);
+                builder.create().show();
+
+                break;
+            case (BluetoothService.MESSAGE_CONNECTED):
+                mStatusView.setText("Connected");
+                mStatusView.setTextColor(Color.GREEN);
+                mProgressDialog.hide();
+                break;
         }
-
-        public void run() {
-            // Cancel discovery because it otherwise slows down the connection.
-            mBluetoothAdapter.cancelDiscovery();
-
-            try {
-                // Connect to the remote device through the socket. This call blocks
-                // until it succeeds or throws an exception.
-                mmSocket.connect();
-            } catch (IOException connectException) {
-                // Unable to connect; close the socket and return.
-                Log.w(TAG, "Unable to connect!");
-                Log.w(TAG, connectException);
-
-                try {
-                    Class<?> clazz = mmSocket.getRemoteDevice().getClass();
-                    Class<?>[] paramTypes = new Class<?>[] {Integer.TYPE};
-
-                    Method m = clazz.getMethod("createRfcommSocket", paramTypes);
-                    Object[] params = new Object[] {Integer.valueOf(1)};
-
-                    mmSocket = (BluetoothSocket) m.invoke(mmSocket.getRemoteDevice(), params);
-                    mmSocket.connect();
-                } catch (IOException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                    Log.w(TAG, e);
-                    cancel();
-                }
-            }
-
-            // The connection attempt succeeded. Perform work associated with
-            // the connection in a separate thread.
-            manageMyConnectedSocket(mmSocket);
-        }
-
-        // Closes the client socket and causes the thread to finish.
-        public void cancel() {
-            try {
-                mmSocket.close();
-            } catch (IOException e) {
-                Log.e(TAG, "Could not close the client socket", e);
-            }
-        }
-
-        private void manageMyConnectedSocket(BluetoothSocket socket) {
-            try {
-                Log.v(TAG, "Connection established.");
-                PrintStream printer = new PrintStream(socket.getOutputStream());
-                printer.println("Hello World!");
-                printer.println("Time: " + System.currentTimeMillis());
-                cancel();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
+        return false;
     }
 }
