@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -45,19 +46,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.hide();
 
-        if (mBluetoothAdapter == null) {
-            Toast.makeText(this, "Your device doesn't support bluetooth.", Toast.LENGTH_LONG).show();
-            finish();
-        }
-
-        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
-
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(intent, REQUEST_ENABLE_BT);
-            return;
-        }
-
         final Intent connectIntent = new Intent(this, DeviceListActivity.class);
         ((Button) findViewById(R.id.connectButton)).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -74,6 +62,19 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
         mHandler = new Handler(Looper.getMainLooper(), this);
         mBluetoothService = new BluetoothService(mHandler);
+
+        if (mBluetoothAdapter == null) {
+            Toast.makeText(this, "Your device doesn't support bluetooth.", Toast.LENGTH_LONG).show();
+            finish();
+        }
+
+        if (!mBluetoothAdapter.isEnabled()) {
+            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(intent, REQUEST_ENABLE_BT);
+            return;
+        }
+
+        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
     }
 
     @Override

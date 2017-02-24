@@ -11,6 +11,9 @@ import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.Layout;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Adapter;
@@ -56,6 +59,24 @@ public class DeviceListActivity extends AppCompatActivity {
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.device_list_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case (R.id.refresh):
+                startScanning();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
 
@@ -65,11 +86,7 @@ public class DeviceListActivity extends AppCompatActivity {
         filter.addAction(BluetoothDevice.ACTION_FOUND);
         registerReceiver(mBroadcastReceiver, filter);
 
-        mDeviceAdapter.clear();
-        for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
-            onDeviceFound(device);
-        }
-        mBluetoothAdapter.startDiscovery();
+        startScanning();
     }
 
     @Override
@@ -77,6 +94,14 @@ public class DeviceListActivity extends AppCompatActivity {
         super.onPause();
 
         unregisterReceiver(mBroadcastReceiver);
+    }
+
+    public void startScanning() {
+        mDeviceAdapter.clear();
+        for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
+            onDeviceFound(device);
+        }
+        mBluetoothAdapter.startDiscovery();
     }
 
     private void onDeviceFound(final BluetoothDevice device) {
