@@ -18,9 +18,12 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutCompat;
 import android.util.Log;
 import android.util.SparseArray;
+import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 public class MainActivity extends AppCompatActivity implements
@@ -94,12 +97,22 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
+    private void setTabEnabled(int position, boolean enabled) {
+        LinearLayout tabStrip = (LinearLayout) mTabLayout.getChildAt(0);
+        tabStrip.getChildAt(position).setEnabled(enabled);
+
+        if (mViewPager.getCurrentItem() == position) {
+            mViewPager.setCurrentItem(0);
+        }
+    }
+
     @Override
     public boolean handleMessage(Message msg) {
         Log.v(TAG, "Received message: " + msg);
         Bundle bundle = msg.getData();
         switch (msg.what) {
             case (BluetoothService.MESSAGE_DISCONNECTED):
+                setTabEnabled(1, false);
                 mProgressDialog.hide();
                 break;
             case (BluetoothService.MESSAGE_CONNECTING):
@@ -124,6 +137,7 @@ public class MainActivity extends AppCompatActivity implements
 
                 break;
             case (BluetoothService.MESSAGE_CONNECTED):
+                setTabEnabled(1, true);
                 mProgressDialog.hide();
                 break;
             case (MyBluetoothClient.MESSAGE_BYTES_RECEIVED):
@@ -180,7 +194,7 @@ public class MainActivity extends AppCompatActivity implements
                 case 0:
                     return "Status";
                 case 1:
-                    return "Test";
+                    return "Log";
                 default:
                     return "Unknown";
             }
