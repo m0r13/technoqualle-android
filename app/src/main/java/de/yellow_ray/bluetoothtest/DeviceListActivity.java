@@ -21,7 +21,9 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -51,8 +53,6 @@ public class DeviceListActivity extends AppCompatActivity {
                 finish();
             }
         });
-
-        mBluetoothAdapter.startDiscovery();
     }
 
     @Override
@@ -64,6 +64,12 @@ public class DeviceListActivity extends AppCompatActivity {
         filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED);
         filter.addAction(BluetoothDevice.ACTION_FOUND);
         registerReceiver(mBroadcastReceiver, filter);
+
+        mDeviceAdapter.clear();
+        for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
+            onDeviceFound(device);
+        }
+        mBluetoothAdapter.startDiscovery();
     }
 
     @Override
@@ -178,7 +184,14 @@ public class DeviceListActivity extends AppCompatActivity {
             TextView text = (TextView) view.findViewById(R.id.text1);
 
             BluetoothDevice device = (BluetoothDevice) getItem(i);
-            text.setText(device.getAddress());
+            String label = device.getAddress();
+            if (device.getName() != null) {
+                label += ": " + device.getName();
+            }
+            if (device.getBondState() == BluetoothDevice.BOND_BONDED) {
+                label += " (Already paired)";
+            }
+            text.setText(label);
 
             return view;
         }

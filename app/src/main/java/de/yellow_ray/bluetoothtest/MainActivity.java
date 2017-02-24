@@ -45,17 +45,6 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.hide();
 
-        final Intent connectIntent = new Intent(this, DeviceListActivity.class);
-        ((Button) findViewById(R.id.connectButton)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivityForResult(connectIntent, REQUEST_PICK_DEVICE);
-            }
-        });
-
-        mHandler = new Handler(Looper.getMainLooper(), this);
-        mBluetoothService = new BluetoothService(mHandler);
-
         if (mBluetoothAdapter == null) {
             Toast.makeText(this, "Your device doesn't support bluetooth.", Toast.LENGTH_LONG).show();
             finish();
@@ -69,9 +58,22 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
             return;
         }
 
-        for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
-            Log.v(TAG, "Paired: " + device.getName() + " " + device.getAddress());
-        }
+        final Intent connectIntent = new Intent(this, DeviceListActivity.class);
+        ((Button) findViewById(R.id.connectButton)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivityForResult(connectIntent, REQUEST_PICK_DEVICE);
+            }
+        });
+        ((Button) findViewById(R.id.disconnectButton)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mBluetoothService.disconnect();
+            }
+        });
+
+        mHandler = new Handler(Looper.getMainLooper(), this);
+        mBluetoothService = new BluetoothService(mHandler);
     }
 
     @Override
@@ -109,7 +111,7 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
                 mStatusView.setText("Connecting...");
                 mStatusView.setTextColor(Color.YELLOW);
                 mProgressDialog.setMessage("Connecting...");
-                mProgressDialog.setMessage("Connecting to " + (device.getName() == null ? device.getAddress() : device.getName()));
+                mProgressDialog.setMessage("Connecting to " + (device.getName() == null ? device.getAddress() : device.getName()) + "...");
                 mProgressDialog.show();
                 break;
             case (BluetoothService.MESSAGE_CONNECTING_FAILED):
