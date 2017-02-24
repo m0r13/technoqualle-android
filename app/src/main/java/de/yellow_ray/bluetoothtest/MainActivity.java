@@ -6,22 +6,27 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentPagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
+import android.util.SparseArray;
+import android.view.ViewGroup;
 import android.widget.Toast;
 
-public class MainActivity extends AppCompatActivity implements Handler.Callback {
+public class MainActivity extends AppCompatActivity implements
+        Handler.Callback,
+        StatusFragment.StatusFragmentListener,
+        LogFragment.LogFragmentListener {
 
     private static final String TAG = "MainActivity";
     private static final int REQUEST_ENABLE_BT = 42;
@@ -32,7 +37,10 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
     private Handler mHandler;
     private BluetoothService mBluetoothService;
 
-    private TextView mStatusView;
+    private PageAdapter mPageAdapter;
+    private ViewPager mViewPager;
+    private TabLayout mTabLayout;
+
     private ProgressDialog mProgressDialog;
 
     @Override
@@ -40,25 +48,16 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        mStatusView = (TextView) findViewById(R.id.statusText);
+        mPageAdapter = new PageAdapter(getSupportFragmentManager());
+        mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mPageAdapter);
+        mTabLayout = (TabLayout) findViewById(R.id.sliding_tabs);
+        mTabLayout.setupWithViewPager(mViewPager);
+
         mProgressDialog = new ProgressDialog(this);
         mProgressDialog.setCancelable(false);
         mProgressDialog.setIndeterminate(true);
         mProgressDialog.hide();
-
-        final Intent connectIntent = new Intent(this, DeviceListActivity.class);
-        ((Button) findViewById(R.id.connectButton)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivityForResult(connectIntent, REQUEST_PICK_DEVICE);
-            }
-        });
-        ((Button) findViewById(R.id.disconnectButton)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                mBluetoothService.disconnect();
-            }
-        });
 
         mHandler = new Handler(Looper.getMainLooper(), this);
         mBluetoothService = new BluetoothService(mHandler);
@@ -68,13 +67,11 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
             finish();
         }
 
+        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
         if (!mBluetoothAdapter.isEnabled()) {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(intent, REQUEST_ENABLE_BT);
-            return;
         }
-
-        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
     }
 
     @Override
@@ -103,14 +100,10 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
         Bundle bundle = msg.getData();
         switch (msg.what) {
             case (BluetoothService.MESSAGE_DISCONNECTED):
-                mStatusView.setText("Disconnected");
-                mStatusView.setTextColor(Color.RED);
                 mProgressDialog.hide();
                 break;
             case (BluetoothService.MESSAGE_CONNECTING):
                 BluetoothDevice device = (BluetoothDevice) bundle.getParcelable("device");
-                mStatusView.setText("Connecting...");
-                mStatusView.setTextColor(Color.YELLOW);
                 mProgressDialog.setMessage("Connecting...");
                 mProgressDialog.setMessage("Connecting to " + (device.getName() == null ? device.getAddress() : device.getName()) + "...");
                 mProgressDialog.show();
@@ -131,11 +124,88 @@ public class MainActivity extends AppCompatActivity implements Handler.Callback 
 
                 break;
             case (BluetoothService.MESSAGE_CONNECTED):
-                mStatusView.setText("Connected");
-                mStatusView.setTextColor(Color.GREEN);
                 mProgressDialog.hide();
                 break;
+            case (MyBluetoothClient.MESSAGE_BYTES_RECEIVED):
+                Log.d(TAG, "Received " + bundle.getInt("count") + " bytes");
         }
+
+        if (mPageAdapter.getRegisteredFragment(0) != null) {
+            StatusFragment status = (StatusFragment) mPageAdapter.getRegisteredFragment(0);
+            status.handleMessage(msg);
+        }
+
+        if (mPageAdapter.getRegisteredFragment(1) != null) {
+            LogFragment test = (LogFragment) mPageAdapter.getRegisteredFragment(1);
+            test.handleMessage(msg);
+        }
+
         return false;
+    }
+
+    @Override
+    public void handleConnect() {
+        final Intent connectIntent = new Intent(this, DeviceListActivity.class);
+        startActivityForResult(connectIntent, REQUEST_PICK_DEVICE);
+    }
+
+    @Override
+    public void handleDisconnect() {
+        mBluetoothService.disconnect();
+    }
+
+    public static class PageAdapter extends FragmentPagerAdapter {
+
+        private SparseArray<Fragment> mRegisteredFragments = new SparseArray<>();
+
+        public PageAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int position) {
+            switch (position) {
+                case 0:
+                    return new StatusFragment();
+                case 1:
+                    return new LogFragment();
+                default:
+                    return null;
+            }
+        }
+
+        @Override
+        public CharSequence getPageTitle(int position) {
+            switch (position) {
+                case 0:
+                    return "Status";
+                case 1:
+                    return "Test";
+                default:
+                    return "Unknown";
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return 2;
+        }
+
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            Fragment fragment = (Fragment) super.instantiateItem(container, position);
+            mRegisteredFragments.put(position, fragment);
+            return fragment;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            mRegisteredFragments.remove(position);
+            super.destroyItem(container, position, object);
+        }
+
+        public Fragment getRegisteredFragment(int position) {
+            return mRegisteredFragments.get(position);
+        }
     }
 }
