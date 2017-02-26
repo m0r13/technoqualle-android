@@ -12,7 +12,9 @@ import android.widget.TextView;
 
 import java.io.UnsupportedEncodingException;
 
-public class LogFragment extends Fragment {
+import de.yellow_ray.bluetoothtest.protocol.Package;
+
+public class LogFragment extends Fragment implements MessageHandler {
 
     private LogFragmentListener mListener;
 
@@ -45,10 +47,11 @@ public class LogFragment extends Fragment {
         mStatusView.setText("Received " + count + " bytes.");
     }
 
-    void handleMessage(Message msg) {
+    @Override
+    public void handleMessage(final Message msg) {
         Bundle bundle = msg.getData();
         switch (msg.what) {
-            case (MyBluetoothClient.MESSAGE_BYTES_RECEIVED):
+            case (TechnoBluetoothClient.MESSAGE_BYTES_RECEIVED):
                 try {
                     mLogView.append(new String(bundle.getByteArray("bytes"), "UTF-8"));
                 } catch (UnsupportedEncodingException e) {
@@ -57,6 +60,10 @@ public class LogFragment extends Fragment {
                 setReceivedBytes(bundle.getInt("count"));
                 break;
         }
+    }
+
+    @Override
+    public void handlePackage(final Package pkg) {
     }
 
     public interface LogFragmentListener {

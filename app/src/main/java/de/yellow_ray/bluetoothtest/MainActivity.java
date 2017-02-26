@@ -18,13 +18,14 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.widget.LinearLayoutCompat;
 import android.util.Log;
 import android.util.SparseArray;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
+
+import de.yellow_ray.bluetoothtest.protocol.Package;
+import de.yellow_ray.bluetoothtest.protocol.TechnoProtocol;
 
 public class MainActivity extends AppCompatActivity implements
         Handler.Callback,
@@ -112,7 +113,9 @@ public class MainActivity extends AppCompatActivity implements
         Bundle bundle = msg.getData();
         switch (msg.what) {
             case (BluetoothService.MESSAGE_DISCONNECTED):
-                setTabEnabled(1, false);
+                for (int i = 1; i < mPageAdapter.getCount(); i++) {
+                    setTabEnabled(i, false);
+                }
                 mProgressDialog.hide();
                 break;
             case (BluetoothService.MESSAGE_CONNECTING):
@@ -137,21 +140,25 @@ public class MainActivity extends AppCompatActivity implements
 
                 break;
             case (BluetoothService.MESSAGE_CONNECTED):
-                setTabEnabled(1, true);
+                for (int i = 1; i < mPageAdapter.getCount(); i++) {
+                    setTabEnabled(i, true);
+                }
                 mProgressDialog.hide();
                 break;
-            case (MyBluetoothClient.MESSAGE_BYTES_RECEIVED):
+            case (TechnoBluetoothClient.MESSAGE_BYTES_RECEIVED):
                 Log.d(TAG, "Received " + bundle.getInt("count") + " bytes");
+                break;
+            case TechnoBluetoothClient.MESSAGE_PACKAGE_RECEIVED:
+                Package pkg = bundle.getParcelable("package");
+                Log.v(TAG, "Received package of type: " + (int) pkg.type);
+                String message = "Current time: " + System.currentTimeMillis();
+                mBluetoothService.sendPackage(TechnoProtocol.createLog(message));
         }
 
-        if (mPageAdapter.getRegisteredFragment(0) != null) {
-            StatusFragment status = (StatusFragment) mPageAdapter.getRegisteredFragment(0);
-            status.handleMessage(msg);
-        }
-
-        if (mPageAdapter.getRegisteredFragment(1) != null) {
-            LogFragment test = (LogFragment) mPageAdapter.getRegisteredFragment(1);
-            test.handleMessage(msg);
+        for (int i = 0; i < mPageAdapter.getCount(); i++) {
+            if (mPageAdapter.getRegisteredFragment(i) != null) {
+                ((MessageHandler) mPageAdapter.getRegisteredFragment(i)).handleMessage(msg);
+            }
         }
 
         return false;

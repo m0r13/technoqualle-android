@@ -15,6 +15,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.UUID;
 
+import de.yellow_ray.bluetoothtest.protocol.Package;
+
 public class BluetoothService<T extends BluetoothClient> {
 
     public static final String TAG = "BluetoothService";
@@ -28,7 +30,7 @@ public class BluetoothService<T extends BluetoothClient> {
 
     private BluetoothSocket mSocket = null;
     private ConnectThread mConnectThread = null;
-    private MyBluetoothClient mClientThread = null;
+    private TechnoBluetoothClient mClientThread = null;
 
     BluetoothService(final Handler handler) {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -50,6 +52,12 @@ public class BluetoothService<T extends BluetoothClient> {
         closeSocket();
     }
 
+    public void sendPackage(Package pkg) {
+        if (mClientThread != null) {
+            mClientThread.sendPackage(pkg);
+        }
+    }
+
     private void notifyDisconnected() {
         mHandler.obtainMessage(MESSAGE_DISCONNECTED).sendToTarget();
     }
@@ -62,9 +70,10 @@ public class BluetoothService<T extends BluetoothClient> {
         msg.sendToTarget();
     }
 
-    private void notifyConnectingFailed(final String reason) {
+    private void notifyConnectingFailed(final BluetoothDevice device, final String reason) {
         Message msg = mHandler.obtainMessage(MESSAGE_CONNECTING_FAILED);
         Bundle bundle = new Bundle();
+        bundle.putParcelable("device", device);
         bundle.putString("reason", reason);
         msg.setData(bundle);
         msg.sendToTarget();
@@ -94,12 +103,12 @@ public class BluetoothService<T extends BluetoothClient> {
         try {
             InputStream input = mSocket.getInputStream();
             OutputStream output = mSocket.getOutputStream();
-            mClientThread = new MyBluetoothClient(mHandler, input, output);
+            mClientThread = new TechnoBluetoothClient(mHandler, input, output);
             mClientThread.start();
             notifyConnected(socket.getRemoteDevice());
         } catch (IOException e) {
             Log.w(TAG, e);
-            notifyConnectingFailed(e.toString());
+            notifyConnectingFailed(socket.getRemoteDevice(), e.toString());
             closeSocket();
         }
     }
@@ -120,7 +129,7 @@ public class BluetoothService<T extends BluetoothClient> {
                 mSocket = mDevice.createRfcommSocketToServiceRecord(UUID.fromString("00001101-0000-1000-8000-00805f9b34fb"));
             } catch (IOException e) {
                 Log.e(TAG, "Socket's create() method failed", e);
-                notifyConnectingFailed(e.toString());
+                notifyConnectingFailed(mDevice, e.toString());
                 closeSocket();
                 return;
             }
@@ -145,7 +154,7 @@ public class BluetoothService<T extends BluetoothClient> {
                     mSocket.connect();
                 } catch (IOException | NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
                     Log.w(TAG, e);
-                    notifyConnectingFailed(e.toString());
+                    notifyConnectingFailed(mDevice, e.toString());
                     closeSocket();
                     return;
                 }

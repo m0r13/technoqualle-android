@@ -16,7 +16,9 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
-public class StatusFragment extends Fragment {
+import de.yellow_ray.bluetoothtest.protocol.Package;
+
+public class StatusFragment extends Fragment implements MessageHandler {
 
     private StatusFragmentListener mListener;
 
@@ -38,6 +40,7 @@ public class StatusFragment extends Fragment {
         View root = inflater.inflate(R.layout.fragment_status, container, false);
 
         mStatusView = (TextView) root.findViewById(R.id.statusText);
+        setDisconnected();
 
         ((Button) root.findViewById(R.id.connectButton)).setOnClickListener(new View.OnClickListener() {
             @Override
@@ -55,24 +58,35 @@ public class StatusFragment extends Fragment {
         return root;
     }
 
-    void handleMessage(Message msg) {
+    public void setConnected(final BluetoothDevice device) {
+        mStatusView.setText("Connected to " + device.getAddress());
+        if (device.getName() != null) {
+            mStatusView.append(" (" + device.getName() + ")");
+        }
+        mStatusView.setTextColor(Color.GREEN);
+    }
+
+    private void setDisconnected() {
+        mStatusView.setText("Disconnected");
+        mStatusView.setTextColor(Color.RED);
+    }
+
+    @Override
+    public void handleMessage(final Message msg) {
         Bundle bundle = msg.getData();
         switch (msg.what) {
             case (BluetoothService.MESSAGE_DISCONNECTED):
-                mStatusView.setText("Disconnected");
-                mStatusView.setTextColor(Color.RED);
-                break;
-            case (BluetoothService.MESSAGE_CONNECTING):
-                BluetoothDevice device = (BluetoothDevice) bundle.getParcelable("device");
-                mStatusView.setText("Connecting...");
-                mStatusView.setTextColor(Color.YELLOW);
-                break;
-            case (BluetoothService.MESSAGE_CONNECTING_FAILED):
+                setDisconnected();
                 break;
             case (BluetoothService.MESSAGE_CONNECTED):
-                mStatusView.setText("Connected");
-                mStatusView.setTextColor(Color.GREEN);
+                BluetoothDevice device = (BluetoothDevice) bundle.getParcelable("device");
+                setConnected(device);
+                break;
         }
+    }
+
+    @Override
+    public void handlePackage(Package pkg) {
     }
 
     public interface StatusFragmentListener {

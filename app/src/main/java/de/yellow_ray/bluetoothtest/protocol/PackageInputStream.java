@@ -33,6 +33,9 @@ public class PackageInputStream {
     }
 
     public Package readPackage() throws IOException {
+        if (mDataStream.available() == 0) {
+            return null;
+        }
         char type = readByte();
         char len = readByte();
         byte buffer[] = new byte[len];
