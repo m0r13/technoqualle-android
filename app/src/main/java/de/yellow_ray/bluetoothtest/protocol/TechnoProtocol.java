@@ -1,5 +1,7 @@
 package de.yellow_ray.bluetoothtest.protocol;
 
+import android.os.Bundle;
+
 import java.io.IOException;
 
 public class TechnoProtocol {
@@ -20,5 +22,23 @@ public class TechnoProtocol {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static Bundle parsePackage(Package pkg) {
+        Bundle bundle = new Bundle();
+        try {
+            switch (pkg.type) {
+                case PACKAGE_PING:
+                    break;
+                case PACKAGE_LOG:
+                    bundle.putString("message", pkg.stream.readString());
+                    break;
+                default:
+                    return null;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return bundle;
     }
 }

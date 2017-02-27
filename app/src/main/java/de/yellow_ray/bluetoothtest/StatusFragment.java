@@ -86,7 +86,7 @@ public class StatusFragment extends Fragment implements MessageHandler {
     }
 
     @Override
-    public void handlePackage(Package pkg) {
+    public void handlePackage(final Package pkg, final Bundle data) {
     }
 
     public interface StatusFragmentListener {

@@ -92,6 +92,7 @@ public class TechnoBluetoothClient extends BluetoothClient {
         Message message = mHandler.obtainMessage(MESSAGE_PACKAGE_RECEIVED);
         Bundle bundle = new Bundle();
         bundle.putParcelable("package", pkg);
+        bundle.putParcelable("data", TechnoProtocol.parsePackage(pkg));
         message.setData(bundle);
         message.sendToTarget();
     }

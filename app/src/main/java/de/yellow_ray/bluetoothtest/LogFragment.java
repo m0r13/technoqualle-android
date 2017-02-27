@@ -13,12 +13,12 @@ import android.widget.TextView;
 import java.io.UnsupportedEncodingException;
 
 import de.yellow_ray.bluetoothtest.protocol.Package;
+import de.yellow_ray.bluetoothtest.protocol.TechnoProtocol;
 
 public class LogFragment extends Fragment implements MessageHandler {
 
     private LogFragmentListener mListener;
 
-    private TextView mStatusView;
     private TextView mLogView;
 
     @Override
@@ -36,37 +36,27 @@ public class LogFragment extends Fragment implements MessageHandler {
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_log, container, false);
 
-        mStatusView = (TextView) root.findViewById(R.id.statusText);
         mLogView = (TextView) root.findViewById(R.id.logText);
-        setReceivedBytes(0);
 
         return root;
-    }
-
-    public void setReceivedBytes(int count) {
-        mStatusView.setText("Received " + count + " bytes.");
     }
 
     @Override
     public void handleMessage(final Message msg) {
         Bundle bundle = msg.getData();
         switch (msg.what) {
-            case (TechnoBluetoothClient.MESSAGE_BYTES_RECEIVED):
-                try {
-                    mLogView.append(new String(bundle.getByteArray("bytes"), "UTF-8"));
-                } catch (UnsupportedEncodingException e) {
-                    e.printStackTrace();
-                }
-                setReceivedBytes(bundle.getInt("count"));
-                break;
+            case BluetoothService.MESSAGE_CONNECTED:
+                mLogView.setText("");
         }
     }
 
     @Override
-    public void handlePackage(final Package pkg) {
+    public void handlePackage(final Package pkg, final Bundle data) {
+        if (pkg.type == TechnoProtocol.PACKAGE_LOG) {
+            mLogView.append(data.getString("message"));
+        }
     }
 
     public interface LogFragmentListener {
     }
-
 }

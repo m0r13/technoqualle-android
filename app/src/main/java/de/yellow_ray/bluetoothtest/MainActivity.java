@@ -153,20 +153,17 @@ public class MainActivity extends AppCompatActivity implements
             case TechnoBluetoothClient.MESSAGE_PACKAGE_RECEIVED:
                 Package pkg = bundle.getParcelable("package");
                 Log.v(TAG, "Received package of type: " + (int) pkg.type);
-                if (pkg.type == 1) {
-                    try {
-                        Log.v(TAG, "Log package: " + pkg.stream.readString());
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
                 String message = "Current time: " + System.currentTimeMillis();
                 mBluetoothService.sendPackage(TechnoProtocol.createLog(message));
         }
 
         for (int i = 0; i < mPageAdapter.getCount(); i++) {
+            MessageHandler handler = (MessageHandler) mPageAdapter.getRegisteredFragment(i);
             if (mPageAdapter.getRegisteredFragment(i) != null) {
-                ((MessageHandler) mPageAdapter.getRegisteredFragment(i)).handleMessage(msg);
+                handler.handleMessage(msg);
+                if (msg.what == TechnoBluetoothClient.MESSAGE_PACKAGE_RECEIVED) {
+                    handler.handlePackage((Package) bundle.getParcelable("package"), (Bundle) bundle.getParcelable("data"));
+                }
             }
         }
 
