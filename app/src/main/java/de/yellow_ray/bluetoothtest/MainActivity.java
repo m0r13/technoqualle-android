@@ -24,6 +24,8 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import java.io.IOException;
+
 import de.yellow_ray.bluetoothtest.protocol.Package;
 import de.yellow_ray.bluetoothtest.protocol.TechnoProtocol;
 
@@ -151,6 +153,13 @@ public class MainActivity extends AppCompatActivity implements
             case TechnoBluetoothClient.MESSAGE_PACKAGE_RECEIVED:
                 Package pkg = bundle.getParcelable("package");
                 Log.v(TAG, "Received package of type: " + (int) pkg.type);
+                if (pkg.type == 1) {
+                    try {
+                        Log.v(TAG, "Log package: " + pkg.stream.readString());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
                 String message = "Current time: " + System.currentTimeMillis();
                 mBluetoothService.sendPackage(TechnoProtocol.createLog(message));
         }
