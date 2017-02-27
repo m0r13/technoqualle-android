@@ -32,6 +32,7 @@ import de.yellow_ray.bluetoothtest.protocol.TechnoProtocol;
 public class MainActivity extends AppCompatActivity implements
         Handler.Callback,
         StatusFragment.StatusFragmentListener,
+        ParameterFragment.ParameterFragmentListener,
         LogFragment.LogFragmentListener {
 
     private static final String TAG = "MainActivity";
@@ -182,6 +183,10 @@ public class MainActivity extends AppCompatActivity implements
         mBluetoothService.disconnect();
     }
 
+    @Override
+    public void handleParameterChanged(int index, float value) {
+    }
+
     public static class PageAdapter extends FragmentPagerAdapter {
 
         private SparseArray<Fragment> mRegisteredFragments = new SparseArray<>();
@@ -196,6 +201,8 @@ public class MainActivity extends AppCompatActivity implements
                 case 0:
                     return new StatusFragment();
                 case 1:
+                    return new ParameterFragment();
+                case 2:
                     return new LogFragment();
                 default:
                     return null;
@@ -208,6 +215,8 @@ public class MainActivity extends AppCompatActivity implements
                 case 0:
                     return "Status";
                 case 1:
+                    return "Parameters";
+                case 2:
                     return "Log";
                 default:
                     return "Unknown";
@@ -216,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements
 
         @Override
         public int getCount() {
-            return 2;
+            return 3;
         }
 
         @Override

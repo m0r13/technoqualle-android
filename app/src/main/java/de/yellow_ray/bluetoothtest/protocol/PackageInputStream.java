@@ -25,6 +25,10 @@ public class PackageInputStream {
         return (long) (mDataStream.readInt() & 0xffffffffl);
     }
 
+    public float readFloat() throws IOException {
+        return mDataStream.readFloat();
+    }
+
     public String readString() throws IOException {
         char len = readByte();
         byte buffer[] = new byte[len];

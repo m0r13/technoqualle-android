@@ -46,6 +46,7 @@ public class TechnoBluetoothClient extends BluetoothClient {
         try {
             PackageInputStream packageInput = new PackageInputStream(mInput);
             PackageOutputStream packageOutput = new PackageOutputStream(mOutput);
+            sendPackage(TechnoProtocol.createRequestParameters());
 
             /*
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -64,7 +65,7 @@ public class TechnoBluetoothClient extends BluetoothClient {
                 }
                 while (!mPackageQueue.isEmpty()) {
                     Package pkgToSend = mPackageQueue.take();
-                    Log.v(TAG, "Sending package with type " + (int) pkgToSend.type);
+                    //Log.v(TAG, "Sending package with type " + (int) pkgToSend.type);
                     packageOutput.writePackage(pkgToSend);
 
                     /*
