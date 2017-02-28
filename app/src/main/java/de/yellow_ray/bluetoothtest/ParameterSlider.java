@@ -14,6 +14,7 @@ public class ParameterSlider extends LinearLayout implements SeekBar.OnSeekBarCh
     private static final int SLIDER_MAX = 65535;
 
     private Parameter mParameter = new Parameter();
+    private Listener mListener = null;
 
     private SeekBar mSlider;
     private TextView mNameText, mMinText, mMaxText;
@@ -36,6 +37,10 @@ public class ParameterSlider extends LinearLayout implements SeekBar.OnSeekBarCh
     public void setParameter(final Parameter parameter) {
         mParameter = parameter;
         updateLabels();
+    }
+
+    public void setListener(final Listener listener) {
+        mListener = listener;
     }
 
     private void initialize() {
@@ -72,8 +77,13 @@ public class ParameterSlider extends LinearLayout implements SeekBar.OnSeekBarCh
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if (fromUser) {
-            Log.v(TAG, "Parameter '" + mParameter.getName() + "' changed to: " + getSliderValue());
+        if (!fromUser) {
+            return;
+        }
+
+        Log.v(TAG, "Parameter '" + mParameter.getName() + "' changed to: " + getSliderValue());
+        if (mListener != null) {
+            mListener.handleParameterChanged(mParameter.getIndex(), getSliderValue());
         }
     }
 
@@ -83,5 +93,9 @@ public class ParameterSlider extends LinearLayout implements SeekBar.OnSeekBarCh
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
+    }
+
+    public interface Listener {
+        void handleParameterChanged(int index, float value);
     }
 }

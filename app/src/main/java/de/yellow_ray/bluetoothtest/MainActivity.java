@@ -6,6 +6,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
@@ -17,14 +18,11 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.util.Log;
 import android.util.SparseArray;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Toast;
-
-import java.io.IOException;
 
 import de.yellow_ray.bluetoothtest.protocol.Package;
 import de.yellow_ray.bluetoothtest.protocol.TechnoProtocol;
@@ -185,6 +183,8 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void handleParameterChanged(int index, float value) {
+        // TODO send only X times per second
+        mBluetoothService.sendPackage(TechnoProtocol.createSetParameterValue((char) index, value));
     }
 
     public static class PageAdapter extends FragmentPagerAdapter {

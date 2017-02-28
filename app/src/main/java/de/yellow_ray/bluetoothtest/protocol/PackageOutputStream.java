@@ -30,6 +30,11 @@ public class PackageOutputStream {
         return this;
     }
 
+    public PackageOutputStream writeFloat(float value) throws IOException {
+        mDataStream.writeFloat(value);
+        return this;
+    }
+
     public PackageOutputStream writeString(final String string) throws IOException {
         assert string.length() <= 255;
         writeByte((char) string.length());

@@ -39,6 +39,12 @@ public class Package implements Parcelable {
         }
 
         @Override
+        public Package.Builder writeFloat(float value) throws IOException {
+            super.writeFloat(value);
+            return this;
+        }
+
+        @Override
         public Package.Builder writeShort(int value) throws IOException {
             super.writeShort(value);
             return this;

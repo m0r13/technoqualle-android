@@ -35,11 +35,11 @@ public class TechnoProtocol {
         return new Package.Builder(PACKAGE_REQUEST_PARAMETERS).createPackage();
     }
 
-    public static Package createSetParameterValue(char id, int value) {
+    public static Package createSetParameterValue(char id, float value) {
         try {
             return new Package.Builder(PACKAGE_SET_PARAMETER_VALUE)
                     .writeByte(id)
-                    .writeShort(value)
+                    .writeFloat(value)
                     .createPackage();
         } catch (IOException e) {
             e.printStackTrace();
@@ -66,6 +66,10 @@ public class TechnoProtocol {
                     bundle.putFloat("value", pkg.stream.readFloat());
                     bundle.putFloat("default", pkg.stream.readFloat());
                     bundle.putFloat("max", pkg.stream.readFloat());
+                    break;
+                case PACKAGE_SET_PARAMETER_VALUE:
+                    bundle.putInt("id", pkg.stream.readByte());
+                    bundle.putFloat("value", pkg.stream.readFloat());
                     break;
                 default:
                     return null;
