@@ -63,7 +63,6 @@ public class TechnoProtocol {
                     bundle.putInt("section", pkg.stream.readByte());
                     bundle.putString("name", pkg.stream.readString());
                     bundle.putFloat("min", pkg.stream.readFloat());
-                    bundle.putFloat("value", pkg.stream.readFloat());
                     bundle.putFloat("default", pkg.stream.readFloat());
                     bundle.putFloat("max", pkg.stream.readFloat());
                     break;

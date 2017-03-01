@@ -65,7 +65,7 @@ public class ParameterSlider extends LinearLayout implements SeekBar.OnSeekBarCh
     }
 
     protected void setSliderValue(float value) {
-        float relativeValue = (value - mParameter.getMin()) / mParameter.getMax();
+        float relativeValue = (value - mParameter.getMin()) / (mParameter.getMax() - mParameter.getMin());
         relativeValue = Math.max(0.0f, Math.min(1.0f, relativeValue));
         mSlider.setProgress(Math.round(relativeValue * SLIDER_MAX));
     }
