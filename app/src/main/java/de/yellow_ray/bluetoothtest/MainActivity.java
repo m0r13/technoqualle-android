@@ -25,7 +25,6 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import de.yellow_ray.bluetoothtest.protocol.Package;
-import de.yellow_ray.bluetoothtest.protocol.TechnoProtocol;
 
 public class MainActivity extends AppCompatActivity implements
         Handler.Callback,
@@ -153,8 +152,6 @@ public class MainActivity extends AppCompatActivity implements
             case TechnoBluetoothClient.MESSAGE_PACKAGE_RECEIVED:
                 Package pkg = bundle.getParcelable("package");
                 Log.v(TAG, "Received package of type: " + (int) pkg.type);
-                String message = "Current time: " + System.currentTimeMillis();
-                mBluetoothService.sendPackage(TechnoProtocol.createLog(message));
         }
 
         for (int i = 0; i < mPageAdapter.getCount(); i++) {
