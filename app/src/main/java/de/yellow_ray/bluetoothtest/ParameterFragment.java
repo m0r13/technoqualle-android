@@ -30,6 +30,7 @@ public class ParameterFragment extends Fragment implements MessageHandler {
 
     private ParameterFragmentListener mListener;
 
+    private ArrayList<ExpandableParameterSection> mSections = new ArrayList<>();
     private SectionedRecyclerViewAdapter mSectionAdapter;
     private RecyclerView mRecyclerView;
 
@@ -68,10 +69,11 @@ public class ParameterFragment extends Fragment implements MessageHandler {
             case TechnoProtocol.PACKAGE_BEGIN_PARAMETERS:
                 Log.v(TAG, "PACKAGE_BEGIN_PARAMETERS");
                 mParameterSliders.clear();
+                mSections.clear();
                 mSectionAdapter.removeAllSections();
-                createSection("Global parameters");
                 break;
             case TechnoProtocol.PACKAGE_SECTION:
+                createSection(data.getString("name"));
                 break;
             case TechnoProtocol.PACKAGE_PARAMETER:
                 Log.v(TAG, "PACKAGE_PARAMETER");
@@ -83,8 +85,8 @@ public class ParameterFragment extends Fragment implements MessageHandler {
                 mParameterSliders.put(parameter.getIndex(), slider);
 
                 int sectionIndex = data.getInt("section");
-                if (sectionIndex < mSectionAdapter.getSectionsMap().size()) {
-                    ExpandableParameterSection section = (ExpandableParameterSection) mSectionAdapter.getSectionForPosition(sectionIndex);
+                if (sectionIndex < mSections.size()) {
+                    ExpandableParameterSection section = mSections.get(sectionIndex);
                     section.addParameter(slider);
                 } else {
                     Log.w(TAG, "Parameter '" + parameter.getName() + "' attempts to use unknown section " + sectionIndex);
@@ -108,7 +110,9 @@ public class ParameterFragment extends Fragment implements MessageHandler {
     }
 
     private void createSection(final String name) {
-        mSectionAdapter.addSection(new ExpandableParameterSection(name));
+        ExpandableParameterSection section = new ExpandableParameterSection(name);
+        mSections.add(section);
+        mSectionAdapter.addSection(section);
     }
 
     private final ParameterSlider.Listener mParameterSliderListener = new ParameterSlider.Listener() {

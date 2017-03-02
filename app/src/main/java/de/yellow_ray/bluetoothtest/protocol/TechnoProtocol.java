@@ -55,7 +55,6 @@ public class TechnoProtocol {
                     bundle.putString("message", pkg.stream.readString());
                     break;
                 case PACKAGE_SECTION:
-                    bundle.putInt("id", pkg.stream.readByte());
                     bundle.putString("name", pkg.stream.readString());
                     break;
                 case PACKAGE_PARAMETER:
