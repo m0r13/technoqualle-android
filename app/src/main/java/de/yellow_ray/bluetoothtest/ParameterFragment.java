@@ -35,7 +35,7 @@ public class ParameterFragment extends Fragment implements MessageHandler {
     private List<ExpandableParameterSection> mSections = new ArrayList<>();
     private RecyclerView mRecyclerView;
 
-    private final Map<Integer, ParameterSlider> mParameterSliders = new HashMap<>();
+    private final Map<Integer, ParameterWidget> mParameterWidgets = new HashMap<>();
 
     @Override
     public void onAttach(Context context) {
@@ -69,7 +69,7 @@ public class ParameterFragment extends Fragment implements MessageHandler {
         switch (pkg.type) {
             case TechnoProtocol.PACKAGE_BEGIN_PARAMETERS:
                 Log.v(TAG, "PACKAGE_BEGIN_PARAMETERS");
-                mParameterSliders.clear();
+                mParameterWidgets.clear();
                 mSections.clear();
                 mSectionAdapter.removeAllSections();
                 break;
@@ -80,16 +80,15 @@ public class ParameterFragment extends Fragment implements MessageHandler {
                 Log.v(TAG, "PACKAGE_PARAMETER");
                 Log.v(TAG, "" + data);
                 Parameter parameter = new Parameter(data.getInt("id"), data.getString("name"), data.getFloat("min"), data.getFloat("default"), data.getFloat("max"));
-                ParameterSlider slider = new ParameterSlider(getContext());
-                slider.setParameter(parameter);
-                slider.setListener(mParameterSliderListener);
-                mParameterSliders.put(parameter.getIndex(), slider);
+                parameter.setListener(mParameterListener);
+                ParameterWidget widget = new ParameterSlider(getContext());
+                widget.setParameter(parameter);
+                mParameterWidgets.put(parameter.getIndex(), widget);
 
                 int sectionIndex = data.getInt("section");
                 if (sectionIndex < mSections.size()) {
-                    //ExpandableParameterSection section = (ExpandableParameterSection) mSectionAdapter.getSectionForPosition(sectionIndex);
                     ExpandableParameterSection section = mSections.get(sectionIndex);
-                    section.addParameter(slider);
+                    section.addWidget(widget);
                 } else {
                     Log.w(TAG, "Parameter '" + parameter.getName() + "' attempts to use unknown section " + sectionIndex);
                 }
@@ -102,10 +101,10 @@ public class ParameterFragment extends Fragment implements MessageHandler {
                 Log.v(TAG, "" + data);
                 int id = data.getInt("id");
                 float value = data.getFloat("value");
-                if (!mParameterSliders.containsKey(id)) {
+                if (!mParameterWidgets.containsKey(id)) {
                     Log.w(TAG, "Package was sent to set parameter with id " + id + ", but id is unknown!");
                 } else {
-                    mParameterSliders.get(id).setSliderValue(value);
+                    mParameterWidgets.get(id).setValue(value);
                 }
                 break;
         }
@@ -117,7 +116,7 @@ public class ParameterFragment extends Fragment implements MessageHandler {
         mSections.add(section);
     }
 
-    private final ParameterSlider.Listener mParameterSliderListener = new ParameterSlider.Listener() {
+    private final Parameter.Listener mParameterListener = new Parameter.Listener() {
         @Override
         public void handleParameterChanged(int index, float value) {
             mListener.handleParameterChanged(index, value);
@@ -128,7 +127,7 @@ public class ParameterFragment extends Fragment implements MessageHandler {
 
         private String mTitle;
         private boolean mExpanded = true;
-        private ArrayList<ParameterSlider> mParameters = new ArrayList<>();
+        private ArrayList<ParameterWidget> mWidgets = new ArrayList<>();
 
         ExpandableParameterSection(final String title) {
             super(R.layout.parameter_section_header, R.layout.parameter_section_item);
@@ -136,14 +135,14 @@ public class ParameterFragment extends Fragment implements MessageHandler {
             mTitle = title;
         }
 
-        public void addParameter(final ParameterSlider parameter) {
-            mParameters.add(parameter);
+        public void addWidget(final ParameterWidget widget) {
+            mWidgets.add(widget);
             mSectionAdapter.notifyDataSetChanged();
         }
 
         @Override
         public int getContentItemsTotal() {
-            return mExpanded ? mParameters.size() : 0;
+            return mExpanded ? mWidgets.size() : 0;
         }
 
         @Override
@@ -154,7 +153,7 @@ public class ParameterFragment extends Fragment implements MessageHandler {
         @Override
         public void onBindItemViewHolder(RecyclerView.ViewHolder holder, int position) {
             final ItemViewHolder itemHolder = (ItemViewHolder) holder;
-            itemHolder.setParameterWidget(mParameters.get(position));
+            itemHolder.setWidget(mWidgets.get(position));
         }
 
         @Override
@@ -216,11 +215,14 @@ public class ParameterFragment extends Fragment implements MessageHandler {
             mParameterContainer = (LinearLayout) view.findViewById(R.id.parameterContainer);
         }
 
-        public void setParameterWidget(final ParameterSlider slider) {
-            if (slider.getParent() != null) {
-                ((ViewGroup) slider.getParent()).removeView(slider);
+        public void setWidget(final ParameterWidget widget) {
+            if (widget instanceof View) {
+                View view = (View) widget;
+                if (view.getParent() != null) {
+                    ((ViewGroup) view.getParent()).removeView(view);
+                }
+                mParameterContainer.addView(view);
             }
-            mParameterContainer.addView(slider);
         }
     }
 
