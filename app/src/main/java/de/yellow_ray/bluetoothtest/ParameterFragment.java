@@ -17,6 +17,7 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import de.yellow_ray.bluetoothtest.protocol.Package;
@@ -31,6 +32,7 @@ public class ParameterFragment extends Fragment implements MessageHandler {
     private ParameterFragmentListener mListener;
 
     private SectionedRecyclerViewAdapter mSectionAdapter;
+    private List<ExpandableParameterSection> mSections = new ArrayList<>();
     private RecyclerView mRecyclerView;
 
     private final Map<Integer, ParameterSlider> mParameterSliders = new HashMap<>();
@@ -68,10 +70,11 @@ public class ParameterFragment extends Fragment implements MessageHandler {
             case TechnoProtocol.PACKAGE_BEGIN_PARAMETERS:
                 Log.v(TAG, "PACKAGE_BEGIN_PARAMETERS");
                 mParameterSliders.clear();
+                mSections.clear();
                 mSectionAdapter.removeAllSections();
-                createSection("Global parameters");
                 break;
             case TechnoProtocol.PACKAGE_SECTION:
+                createSection(data.getString("name"));
                 break;
             case TechnoProtocol.PACKAGE_PARAMETER:
                 Log.v(TAG, "PACKAGE_PARAMETER");
@@ -83,8 +86,9 @@ public class ParameterFragment extends Fragment implements MessageHandler {
                 mParameterSliders.put(parameter.getIndex(), slider);
 
                 int sectionIndex = data.getInt("section");
-                if (sectionIndex < mSectionAdapter.getSectionsMap().size()) {
-                    ExpandableParameterSection section = (ExpandableParameterSection) mSectionAdapter.getSectionForPosition(sectionIndex);
+                if (sectionIndex < mSections.size()) {
+                    //ExpandableParameterSection section = (ExpandableParameterSection) mSectionAdapter.getSectionForPosition(sectionIndex);
+                    ExpandableParameterSection section = mSections.get(sectionIndex);
                     section.addParameter(slider);
                 } else {
                     Log.w(TAG, "Parameter '" + parameter.getName() + "' attempts to use unknown section " + sectionIndex);
@@ -108,7 +112,9 @@ public class ParameterFragment extends Fragment implements MessageHandler {
     }
 
     private void createSection(final String name) {
-        mSectionAdapter.addSection(new ExpandableParameterSection(name));
+        ExpandableParameterSection section = new ExpandableParameterSection(name);
+        mSectionAdapter.addSection(section);
+        mSections.add(section);
     }
 
     private final ParameterSlider.Listener mParameterSliderListener = new ParameterSlider.Listener() {

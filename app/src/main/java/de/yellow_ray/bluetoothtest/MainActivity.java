@@ -25,6 +25,7 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import de.yellow_ray.bluetoothtest.protocol.Package;
+import de.yellow_ray.bluetoothtest.protocol.TechnoProtocol;
 
 public class MainActivity extends AppCompatActivity implements
         Handler.Callback,
