@@ -58,6 +58,12 @@ public class BluetoothService<T extends BluetoothClient> {
         }
     }
 
+    public void setParameter(int id, float value) {
+        if (mClientThread != null) {
+            mClientThread.setParameter(id, value);
+        }
+    }
+
     private void notifyDisconnected() {
         mHandler.obtainMessage(MESSAGE_DISCONNECTED).sendToTarget();
     }
