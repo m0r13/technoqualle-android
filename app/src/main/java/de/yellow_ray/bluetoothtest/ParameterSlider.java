@@ -12,8 +12,8 @@ public class ParameterSlider extends LinearLayout implements ParameterWidget, Se
 
     private Parameter mParameter = new Parameter();
 
-    private SeekBar mSlider;
     private TextView mNameText, mMinText, mMaxText;
+    private SeekBar mSlider;
 
     public ParameterSlider(Context context) {
         super(context);
@@ -34,27 +34,28 @@ public class ParameterSlider extends LinearLayout implements ParameterWidget, Se
     public void setParameter(final Parameter parameter) {
         mParameter = parameter;
         updateLabels();
+        setValue(mParameter.getDefault());
     }
 
     private void initialize() {
         inflate(getContext(), R.layout.layout_parameter_slider, this);
 
-        mSlider = (SeekBar) findViewById(R.id.parameterSlider);
-        mSlider.setOnSeekBarChangeListener(this);
-        mSlider.setMax(SLIDER_MAX);
-
         mNameText = (TextView) findViewById(R.id.parameterName);
         mMinText = (TextView) findViewById(R.id.parameterMin);
         mMaxText = (TextView) findViewById(R.id.parameterMax);
 
+        mSlider = (SeekBar) findViewById(R.id.parameterSlider);
+        mSlider.setOnSeekBarChangeListener(this);
+        mSlider.setMax(SLIDER_MAX);
+
         updateLabels();
+        setValue(mParameter.getDefault());
     }
 
     protected void updateLabels() {
-        mNameText.setText(mParameter.getName());
+        mNameText.setText(String.format("%.2f - %s", getValue(), mParameter.getName()));
         mMinText.setText(String.format("%.2f", mParameter.getMin()));
         mMaxText.setText(String.format("%.2f", mParameter.getMax()));
-        setValue(mParameter.getDefault());
     }
 
     @Override
@@ -71,6 +72,7 @@ public class ParameterSlider extends LinearLayout implements ParameterWidget, Se
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+        updateLabels();
         if (!fromUser) {
             return;
         }
