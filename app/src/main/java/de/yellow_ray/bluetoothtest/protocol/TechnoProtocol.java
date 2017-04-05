@@ -64,6 +64,7 @@ public class TechnoProtocol {
                     bundle.putFloat("min", pkg.stream.readFloat());
                     bundle.putFloat("default", pkg.stream.readFloat());
                     bundle.putFloat("max", pkg.stream.readFloat());
+                    bundle.putInt("flags", pkg.stream.readShort());
                     break;
                 case PACKAGE_SET_PARAMETER_VALUE:
                     bundle.putInt("id", pkg.stream.readByte());

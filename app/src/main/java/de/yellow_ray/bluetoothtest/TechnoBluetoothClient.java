@@ -7,7 +7,9 @@ import android.os.Message;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import de.yellow_ray.bluetoothtest.protocol.Package;
@@ -22,10 +24,13 @@ public class TechnoBluetoothClient extends BluetoothClient {
     public static final int MESSAGE_BYTES_RECEIVED = 5;
     public static final int MESSAGE_PACKAGE_RECEIVED = 6;
 
-    private static final long PING_INTERVAL = 1000;
+    private static final long PACKAGE_PING_INTERVAL = 1000;
+    private static final long PACKAGE_SET_PARAMETER_VALUE_INTERVAL = 1000 / 25;
 
     private BlockingQueue<Package> mPackageQueue = new LinkedBlockingDeque<>();
+    private Map<Integer, Float> mParameterValues = new ConcurrentHashMap<>();
     private long mLastPingSent = 0;
+    private long mLastSetParameterValueSent = 0;
 
     public TechnoBluetoothClient(Handler handler, InputStream input, OutputStream output) {
         super(handler, input, output);
@@ -37,6 +42,10 @@ public class TechnoBluetoothClient extends BluetoothClient {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setParameter(int index, float value) {
+        mParameterValues.put(index, value);
     }
 
     public void run() {
@@ -56,10 +65,21 @@ public class TechnoBluetoothClient extends BluetoothClient {
                     handlePackage(pkg);
                 }
 
-                if (System.currentTimeMillis() - PING_INTERVAL > mLastPingSent) {
-                    mLastPingSent = System.currentTimeMillis();
+                long time = System.currentTimeMillis();
+                if (time - PACKAGE_PING_INTERVAL > mLastPingSent) {
+                    mLastPingSent = time;
                     sendPackage(TechnoProtocol.createPing());
                 }
+
+                if (time - PACKAGE_SET_PARAMETER_VALUE_INTERVAL > mLastSetParameterValueSent) {
+                    mLastSetParameterValueSent = time;
+                    Map<Integer, Float> parameterValues = new ConcurrentHashMap<>(mParameterValues);
+                    mParameterValues.clear();
+                    for (Map.Entry<Integer, Float> entry : parameterValues.entrySet()) {
+                        sendPackage(TechnoProtocol.createSetParameterValue((char) entry.getKey().intValue(), entry.getValue()));
+                    }
+                }
+
                 while (!mPackageQueue.isEmpty()) {
                     Package pkgToSend = mPackageQueue.take();
                     //Log.v(TAG, "Sending package with type " + (int) pkgToSend.type);

@@ -181,7 +181,8 @@ public class MainActivity extends AppCompatActivity implements
     @Override
     public void handleParameterChanged(int index, float value) {
         // TODO send only X times per second
-        mBluetoothService.sendPackage(TechnoProtocol.createSetParameterValue((char) index, value));
+        //mBluetoothService.sendPackage(TechnoProtocol.createSetParameterValue((char) index, value));
+        mBluetoothService.setParameter((char) index, value);
     }
 
     public static class PageAdapter extends FragmentPagerAdapter {
