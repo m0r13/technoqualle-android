@@ -79,7 +79,10 @@ public class ParameterFragment extends Fragment implements MessageHandler {
             case TechnoProtocol.PACKAGE_PARAMETER:
                 Log.v(TAG, "PACKAGE_PARAMETER");
                 Log.v(TAG, "" + data);
-                Parameter parameter = new Parameter(data.getInt("id"), data.getString("name"), data.getFloat("min"), data.getFloat("default"), data.getFloat("max"));
+                Parameter parameter = new Parameter(data.getInt("id"), data.getString("name"), data.getFloat("min"), data.getFloat("default"), data.getFloat("max"), data.getInt("flags"));
+                if (parameter.isHidden()) {
+                    break;
+                }
                 parameter.setListener(mParameterListener);
                 ParameterWidget widget = new ParameterSlider(getContext());
                 widget.setParameter(parameter);
