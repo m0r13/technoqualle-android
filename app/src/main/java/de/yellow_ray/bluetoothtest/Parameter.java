@@ -8,6 +8,10 @@ public class Parameter {
 
     public static final int FLAG_HIDE = 1;
     public static final int FLAG_READ_ONLY = 2;
+    public static final int FLAG_TYPE_BOOL = 4;
+    public static final int FLAG_TYPE_INT = 8;
+    public static final int FLAG_SEMANTIC_HOLD = 16;
+    public static final int FLAG_SEMANTIC_ONCE = 32;
 
     private int mIndex;
     private String mName;
@@ -49,12 +53,16 @@ public class Parameter {
         return mMax;
     }
 
+    public boolean hasFlag(int flag) {
+        return (mFlags & flag) != 0;
+    }
+
     public boolean isHidden() {
-        return (mFlags & FLAG_HIDE) != 0;
+        return hasFlag(FLAG_HIDE);
     }
 
     public boolean isReadOnly() {
-        return (mFlags & FLAG_READ_ONLY) != 0;
+        return hasFlag(FLAG_READ_ONLY);
     }
 
     public void setListener(final Listener listener) {
