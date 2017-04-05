@@ -61,7 +61,10 @@ public class ParameterButton extends Button implements ParameterWidget {
                 return true;
             }
             case MotionEvent.ACTION_UP: {
-                mParameter.handleValueChanged(mInactiveValue);
+                // don't need to reset for parameters that have a bool once set
+                if (!mParameter.hasFlag(Parameter.FLAG_SEMANTIC_ONCE)) {
+                    mParameter.handleValueChanged(mInactiveValue);
+                }
                 return true;
             }
         }
