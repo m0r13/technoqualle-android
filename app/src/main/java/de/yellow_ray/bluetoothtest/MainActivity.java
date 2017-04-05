@@ -67,12 +67,17 @@ public class MainActivity extends AppCompatActivity implements
         mHandler = new Handler(Looper.getMainLooper(), this);
         mBluetoothService = new BluetoothService(mHandler);
 
+        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
         if (mBluetoothAdapter == null) {
             Toast.makeText(this, "Your device doesn't support bluetooth.", Toast.LENGTH_LONG).show();
             finish();
         }
+    }
 
-        ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
+    @Override
+    protected void onResume() {
+        super.onResume();
+
         if (!mBluetoothAdapter.isEnabled()) {
             Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(intent, REQUEST_ENABLE_BT);
@@ -152,6 +157,7 @@ public class MainActivity extends AppCompatActivity implements
             case TechnoBluetoothClient.MESSAGE_PACKAGE_RECEIVED:
                 Package pkg = bundle.getParcelable("package");
                 Log.v(TAG, "Received package of type: " + (int) pkg.type);
+                break;
         }
 
         for (int i = 0; i < mPageAdapter.getCount(); i++) {
