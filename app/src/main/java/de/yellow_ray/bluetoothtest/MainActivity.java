@@ -149,6 +149,7 @@ public class MainActivity extends AppCompatActivity implements
                 for (int i = 1; i < mPageAdapter.getCount(); i++) {
                     setTabEnabled(i, true);
                 }
+                mViewPager.setCurrentItem(1);
                 mProgressDialog.hide();
                 break;
             case (TechnoBluetoothClient.MESSAGE_BYTES_RECEIVED):
