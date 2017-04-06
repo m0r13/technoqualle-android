@@ -12,6 +12,7 @@ public class Parameter {
     public static final int FLAG_TYPE_INT = 8;
     public static final int FLAG_SEMANTIC_HOLD = 16;
     public static final int FLAG_SEMANTIC_ONCE = 32;
+    public static final int FLAG_SEMANTIC_SWITCH = 64;
 
     private int mIndex;
     private String mName;
