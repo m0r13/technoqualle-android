@@ -117,12 +117,28 @@ public class MainActivity extends AppCompatActivity implements
     public boolean handleMessage(Message msg) {
         Log.v(TAG, "Received message: " + msg);
         Bundle bundle = msg.getData();
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         switch (msg.what) {
             case (BluetoothService.MESSAGE_DISCONNECTED):
                 for (int i = 1; i < mPageAdapter.getCount(); i++) {
                     setTabEnabled(i, false);
                 }
                 mProgressDialog.hide();
+
+                String reason = bundle.getString("reason");
+                if (reason.isEmpty()) {
+                    break;
+                }
+                builder.setTitle("Disconnected");
+                builder.setMessage(reason);
+                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                    }
+                });
+                builder.setCancelable(false);
+                builder.create().show();
+
                 break;
             case (BluetoothService.MESSAGE_CONNECTING):
                 BluetoothDevice device = (BluetoothDevice) bundle.getParcelable("device");
@@ -133,7 +149,6 @@ public class MainActivity extends AppCompatActivity implements
             case (BluetoothService.MESSAGE_CONNECTING_FAILED):
                 mProgressDialog.hide();
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(this);
                 builder.setTitle("Error");
                 builder.setMessage("Unable to connect: " + bundle.getString("reason"));
                 builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {

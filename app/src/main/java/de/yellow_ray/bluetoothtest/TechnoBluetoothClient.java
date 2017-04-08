@@ -32,8 +32,10 @@ public class TechnoBluetoothClient extends BluetoothClient {
     private long mLastPingSent = 0;
     private long mLastSetParameterValueSent = 0;
 
-    public TechnoBluetoothClient(Handler handler, InputStream input, OutputStream output) {
-        super(handler, input, output);
+    private boolean mStopped = false;
+
+    public TechnoBluetoothClient(BluetoothService bluetoothService, Handler handler, InputStream input, OutputStream output) {
+        super(bluetoothService, handler, input, output);
     }
 
     public void sendPackage(Package pkg) {
@@ -59,7 +61,7 @@ public class TechnoBluetoothClient extends BluetoothClient {
             PackageOutputStream testPackageOutput = new PackageOutputStream(buffer);
             */
 
-            while (true) {
+            while (!mStopped) {
                 Package pkg = packageInput.readPackage();
                 if (pkg != null) {
                     handlePackage(pkg);
@@ -95,6 +97,7 @@ public class TechnoBluetoothClient extends BluetoothClient {
             }
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
+            mBluetoothService.closeSocketAfterError(e.toString());
         }
     }
 
@@ -113,6 +116,10 @@ public class TechnoBluetoothClient extends BluetoothClient {
         bundle.putParcelable("data", TechnoProtocol.parsePackage(pkg));
         message.setData(bundle);
         message.sendToTarget();
+    }
+
+    public void stopClient() {
+        mStopped = true;
     }
 
 }

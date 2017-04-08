@@ -65,7 +65,15 @@ public class BluetoothService<T extends BluetoothClient> {
     }
 
     private void notifyDisconnected() {
-        mHandler.obtainMessage(MESSAGE_DISCONNECTED).sendToTarget();
+        notifyDisconnected("");
+    }
+
+    private void notifyDisconnected(final String reason) {
+        Message msg = mHandler.obtainMessage(MESSAGE_DISCONNECTED);
+        Bundle bundle = new Bundle();
+        bundle.putString("reason", reason);
+        msg.setData(bundle);
+        msg.sendToTarget();
     }
 
     private void notifyConnecting(final BluetoothDevice device) {
@@ -93,15 +101,36 @@ public class BluetoothService<T extends BluetoothClient> {
         msg.sendToTarget();
     }
 
+    public void closeSocketAfterError(final String reason) {
+        try {
+            if (mSocket != null) {
+                mSocket.close();
+            }
+            notifyDisconnected(reason);
+        } catch (IOException e) {
+            Log.e(TAG, "Could not close the client socket", e);
+            notifyDisconnected("Could not close the client socket: " + e.toString());
+        }
+    }
+
     private void closeSocket() {
         try {
+            try {
+                if (mClientThread != null) {
+                    mClientThread.stopClient();
+                    mClientThread.join();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
             if (mSocket != null) {
                 mSocket.close();
                 notifyDisconnected();
             }
         } catch (IOException e) {
             Log.e(TAG, "Could not close the client socket", e);
-            notifyDisconnected();
+            notifyDisconnected("Could not close the client socket: " + e.toString());
         }
     }
 
@@ -109,7 +138,7 @@ public class BluetoothService<T extends BluetoothClient> {
         try {
             InputStream input = mSocket.getInputStream();
             OutputStream output = mSocket.getOutputStream();
-            mClientThread = new TechnoBluetoothClient(mHandler, input, output);
+            mClientThread = new TechnoBluetoothClient(this, mHandler, input, output);
             mClientThread.start();
             notifyConnected(socket.getRemoteDevice());
         } catch (IOException e) {
