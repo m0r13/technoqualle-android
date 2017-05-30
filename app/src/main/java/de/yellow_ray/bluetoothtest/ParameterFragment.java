@@ -89,6 +89,8 @@ public class ParameterFragment extends Fragment implements MessageHandler {
                     widget = new ParameterButton(getContext());
                 } else if (parameter.hasFlag(Parameter.FLAG_SEMANTIC_SWITCH)) {
                     widget = new ParameterSwitch(getContext());
+                } else if (parameter.hasFlag(Parameter.FLAG_TYPE_SELECT)) {
+                    widget = new ParameterSelect(getContext());
                 } else {
                     widget = new ParameterSlider(getContext());
                 }

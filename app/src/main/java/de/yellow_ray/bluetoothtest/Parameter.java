@@ -13,6 +13,7 @@ public class Parameter {
     public static final int FLAG_SEMANTIC_HOLD = 16;
     public static final int FLAG_SEMANTIC_ONCE = 32;
     public static final int FLAG_SEMANTIC_SWITCH = 64;
+    public static final int FLAG_TYPE_SELECT = 128;
 
     private int mIndex;
     private String mName;
@@ -64,6 +65,10 @@ public class Parameter {
 
     public boolean isReadOnly() {
         return hasFlag(FLAG_READ_ONLY);
+    }
+
+    public boolean isTypeSwitch() {
+        return hasFlag(FLAG_TYPE_SELECT);
     }
 
     public void setListener(final Listener listener) {
