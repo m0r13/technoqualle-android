@@ -48,6 +48,11 @@ public class ParameterSwitch extends ToggleButton implements ParameterWidget, Vi
     }
 
     @Override
+    public Parameter getParameter() {
+        return mParameter;
+    }
+
+    @Override
     public void setValue(float value) {
         if (Math.abs(value - mParameter.getMin()) < 0.01) {
             setChecked(false);

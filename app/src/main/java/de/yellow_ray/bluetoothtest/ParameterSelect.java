@@ -74,6 +74,11 @@ public class ParameterSelect extends LinearLayout implements ParameterWidget, Ad
     }
 
     @Override
+    public Parameter getParameter() {
+        return mParameter;
+    }
+
+    @Override
     public void setValue(float value) {
         mSpinner.setSelection((int) value);
     }

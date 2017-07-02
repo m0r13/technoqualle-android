@@ -48,6 +48,11 @@ public class ParameterButton extends Button implements ParameterWidget {
     }
 
     @Override
+    public Parameter getParameter() {
+        return mParameter;
+    }
+
+    @Override
     public void setValue(float value) {
 
     }

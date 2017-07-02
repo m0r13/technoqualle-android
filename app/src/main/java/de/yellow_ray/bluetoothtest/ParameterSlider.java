@@ -37,6 +37,11 @@ public class ParameterSlider extends LinearLayout implements ParameterWidget, Se
         setValue(mParameter.getDefault());
     }
 
+    @Override
+    public Parameter getParameter() {
+        return mParameter;
+    }
+
     private void initialize() {
         inflate(getContext(), R.layout.layout_parameter_slider, this);
 

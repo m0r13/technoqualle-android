@@ -54,6 +54,7 @@ public class TechnoBluetoothClient extends BluetoothClient {
         try {
             PackageInputStream packageInput = new PackageInputStream(mInput);
             PackageOutputStream packageOutput = new PackageOutputStream(mOutput);
+            Thread.sleep(1000);
             sendPackage(TechnoProtocol.createRequestParameters());
 
             /*

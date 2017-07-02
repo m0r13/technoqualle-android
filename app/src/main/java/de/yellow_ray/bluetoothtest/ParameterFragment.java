@@ -16,6 +16,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +81,17 @@ public class ParameterFragment extends Fragment implements MessageHandler {
             case TechnoProtocol.PACKAGE_PARAMETER:
                 Log.v(TAG, "PACKAGE_PARAMETER");
                 Log.v(TAG, "" + data);
+
                 Parameter parameter = new Parameter(data.getInt("id"), data.getString("name"), data.getFloat("min"), data.getFloat("default"), data.getFloat("max"), data.getInt("flags"));
+
+                if (mParameterWidgets.containsKey(parameter.getIndex())) {
+                    ParameterWidget oldWidget = mParameterWidgets.get(parameter.getIndex());
+                    for (ExpandableParameterSection section : mSections) {
+                        section.removeWidget(oldWidget);
+                    }
+                    mParameterWidgets.remove(parameter.getIndex());
+                }
+
                 if (parameter.isHidden()) {
                     break;
                 }
@@ -137,9 +149,9 @@ public class ParameterFragment extends Fragment implements MessageHandler {
 
     private class ExpandableParameterSection extends StatelessSection {
 
-        private String mTitle;
+        public String mTitle;
         private boolean mExpanded = true;
-        private ArrayList<ParameterWidget> mWidgets = new ArrayList<>();
+        public ArrayList<ParameterWidget> mWidgets = new ArrayList<>();
 
         ExpandableParameterSection(final String title) {
             super(R.layout.parameter_section_header, R.layout.parameter_section_item);
@@ -148,8 +160,31 @@ public class ParameterFragment extends Fragment implements MessageHandler {
         }
 
         public void addWidget(final ParameterWidget widget) {
+            // TODO maybe maintain order when inserting
             mWidgets.add(widget);
+            Collections.sort(mWidgets, new Comparator<ParameterWidget>() {
+                @Override
+                public int compare(ParameterWidget w1, ParameterWidget w2) {
+                    return Integer.valueOf(w1.getParameter().getIndex())
+                            .compareTo(Integer.valueOf(w2.getParameter().getIndex()));
+                }
+            });
             mSectionAdapter.notifyDataSetChanged();
+        }
+
+        public boolean removeWidget(final ParameterWidget widget) {
+            boolean removed = mWidgets.remove(widget);
+            if (removed) {
+                // TODO eehhh... kind of an hack:
+                // recycler view thing doesn't seem to properly remove views
+                try {
+                    View view = (View) widget;
+                    ((ViewGroup) view.getParent()).removeView(view);
+                } catch (ClassCastException e) {
+                }
+            }
+            mSectionAdapter.notifyDataSetChanged();
+            return removed;
         }
 
         @Override
